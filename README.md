@@ -51,6 +51,12 @@ Targeted at **AMD Strix Halo** (gfx1151) and similar RDNA 3/3.5 APU hardware, th
 - Applied patch increasing `MAX_REpetition_THRESHOLD` from 2000 to 100000 in `llama-grammar.cpp`
 - Addresses constraint complexity limits for complex tool/function calling schemas (see [KYmidnight/amd-strix-halo-toolboxes#70](https://github.com/kyuz0/amd-strix-halo-toolboxes/issues/70))
 
+### 7. Model Management
+- Automated downloader (`scripts/download-model.sh`) for Hugging Face GGUF models
+- Supports auto-detection of available quantizations and batch downloads
+- `.gitignore` configured to prevent committing large model artifacts
+- Target directory flexibility for custom model storage layouts
+
 ---
 
 ## Metrics Reference
@@ -159,7 +165,8 @@ Per hardware block: `gpu_ecc_uncorrect_{athub,bif,df,fuse,gfx,hdp,ih,jpeg,mca,mm
 ### Prerequisites
 - AMD GPU with ROCm drivers installed (Ubuntu 24.04 / Arch Linux)
 - Docker & Docker Compose
-- At least 16GB shared CPU/GPU memory (UMA mode)
+- Python 3.8+ (for VRAM estimator)
+- `huggingface-cli` (for model downloads)
 
 ### Launch
 ```bash
@@ -182,6 +189,18 @@ docker compose ps
 ### Stop
 ```bash
 docker compose down
+```
+
+### Download Models
+```bash
+# List available GGUF files and pick one
+./scripts/download-model.sh TheBloke/Llama-2-7B-GGUF
+
+# Download a specific quantization
+./scripts/download-model.sh TheBloke/Llama-2-7B-GGUF llama-2-7b.Q4_K_M.gguf
+
+# Custom target directory
+./scripts/download-model.sh Qwen/Qwen2.5-7B-Instruct-GGUF qwen2.5-7b-instruct-q4_k_m.gguf ./custom_models
 ```
 
 ---
@@ -209,9 +228,12 @@ llama-cpp/
 ├── Dockerfile                    # Multi-stage ROCm build + runtime
 ├── compose.yaml                  # Docker Compose services
 ├── .env                          # Runtime configuration (env vars)
+├── .gitignore                    # Git ignore rules (models, secrets)
 ├── prometheus.yml                # Prometheus scrape config
 ├── gguf-vram-estimator.py        # GGUF VRAM estimation utility
 ├── llama-grammar.patch           # MAX_REPETITION_THRESHOLD patch
+├── scripts/
+│   └── download-model.sh         # Hugging Face model downloader
 ├── models  -> ./path/to/models   # Symlink to model directory
 ├── available_metrics_llama.md    # llama-server metrics reference
 ├── avilable_metrics_gpu.md       # ROCm GPU metrics reference

@@ -1,4 +1,22 @@
-models/
+# Models (large files)
+models/*.gguf
+models/*.bin
+models/*.pt
+models/*.safetensors
+custom_models/
+
+# Environment files with secrets
 .env
-available_metrics_gpu.md
-available_metrics_llama.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Build artifacts
+build/
+*.o
+*.pyc
