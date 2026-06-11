@@ -1,0 +1,95 @@
+services:
+  llama:
+    build: 
+      dockerfile: Dockerfile
+      context: .
+    container_name: llama-rocm
+    # Use standard container privileges supplemented by group access instead of full "privileged: true"
+    ipc: host
+    shm_size: '16gb' 
+    
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+
+    group_add:
+      - video
+      - render
+
+    security_opt:
+      - seccomp:unconfined
+
+    env_file:
+      - .env
+
+    environment:
+      # Fixes potential system stability issues on RDNA 3.5 APUs
+      HSA_ENABLE_SDMA: "0"
+      # Forces llama.cpp to optimize unified system/GPU memory channels
+      LLAMA_HIP_UMA: "1"
+
+    volumes:
+      - ./models:/models
+
+    ports:
+      - "${PORT}:${PORT}"
+    
+    # Override the container CMD to append the critical vision adapter flag
+    command: >
+      /bin/bash -c "llama-server
+      --metrics  
+      --n-gpu-layers $$NGL
+      --host 0.0.0.0 
+      --port $$PORT 
+      -c $$CONTEXT_LENGTH 
+      --temp $$TEMPERATURE 
+      --jinja 
+      --no-mmap 
+      -fa $$FA
+      -m $$MODEL_PATH 
+      --mmproj $$MMPROJ_PATH"
+
+#AMD GPU Metrics Exporter
+  rocm-metrics:
+    image: docker.io/rocm/device-metrics-exporter:v1.5.0
+    container_name: rocm-metrics
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    security_opt:
+      - seccomp:unconfined
+    group_add:
+      - video
+      - render
+    ports:
+      - "9001:5000"
+    # Forza il server interno ad avviarsi sulla porta 9001 su tutte le interfacce
+    restart: unless-stopped
+
+  # Prometheus TSDB Storage
+  prometheus:
+    image: docker.io/prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  # Grafana Dashboard UI
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    restart: unless-stopped
+
+volumes:
+  grafana-storage:

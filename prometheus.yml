@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'llama-server'
+    static_configs:
+      - targets: ['llama:8080'] # Ensure this matches your llama container port
+
+  - job_name: 'rocm-gpu'
+    static_configs:
+      - targets: ['rocm-metrics:5000']
