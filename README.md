@@ -56,33 +56,41 @@ Targeted at **AMD Strix Halo** (gfx1151) and similar RDNA 3/3.5 APU hardware, th
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                   Docker Compose                    │
-│                                                     │
-│  ┌──────────────┐    ┌──────────────────────────┐   │
-│  │  llama       │    │  rocm-metrics            │   │
-│  │  (llama-server)│   │  (device-metrics-        │   │
-│  │  :8080        │    │   exporter:5000)         │   │
-│  │              │    │  :9001 (metrics)         │   │
-│  └──────┬───────┘    └──────────┬───────────────┘   │
-│         │ scrape (5s)           │ scrape (5s)       │
+┌──────────────────────────────────────────────────────┐
+│                   Docker Compose                     │
+│                                                      │
+│  ┌────────────────┐  ┌──────────────────────────┐    │
+│  │  llama         │  │  rocm-metrics            │    │
+│  │  (llama-server)│  │  (device-metrics-        │    │
+│  │  :8080         │  │   exporter:5000)         │    │
+│  │                │  │  :9001 (metrics)         │    │
+│  └──────┬─────────┘  └──────────┬───────────────┘    │
+│         │ scrape (5s)           │ scrape (5s)        │
 │         ▼                       ▼                    │
 │  ┌──────────────────────────────────────────┐        │
-│  │         Prometheus (:9090)              │        │
-│  │         (TSDB storage)                  │        │
+│  │         Prometheus (:9090)               │        │
+│  │         (TSDB storage)                   │        │
 │  └──────────────────────┬───────────────────┘        │
 │                         │ query                      │
 │                         ▼                            │
 │  ┌──────────────────────────────────────────┐        │
-│  │         Grafana (:3000)                 │        │
-│  │         (dashboards)                    │        │
+│  │         Grafana (:3000)                  │        │
+│  │         (dashboards)                     │        │
 │  └──────────────────────────────────────────┘        │
-└─────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────┘
          │
          ▼
    AMD GPU (gfx1151)
    /dev/kfd, /dev/dri
 ```
+
+---
+
+## Screenshots
+
+### Grafana Dashboard
+
+![Grafana Dashboard](screenshots/grafana_screen.png)
 
 ---
 
@@ -144,7 +152,7 @@ llama-cpp/
 ├── prometheus.yml                # Prometheus scrape config
 ├── gguf-vram-estimator.py        # GGUF VRAM estimation utility
 ├── llama-grammar.patch           # MAX_REPETITION_THRESHOLD patch
-├── models -> ~/.lmstudio/models/ # Symlink to model directory
+├── models  -> ./path/to/models   # Symlink to model directory
 ├── available_metrics_llama.md    # llama-server metrics reference
 ├── avilable_metrics_gpu.md       # ROCm GPU metrics reference
 └── grafana/
